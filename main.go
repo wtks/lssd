@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -115,6 +117,23 @@ func (m *Main) startRecording(ls *LiveStream) error {
 		m.recordingsLock.Lock()
 		defer m.recordingsLock.Unlock()
 		delete(m.recordings, ls.ID)
+	}()
+	go func() {
+		img, err := ls.Info.DownloadThumbnailImage()
+		if err != nil {
+			log.WithError(err).Errorf("failed to download the thumbnail image of live %s", ls.ID)
+			return
+		}
+		defer img.Close()
+
+		f, err := os.OpenFile(filepath.Join(m.RecordDir, ls.ID+".jpg"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+		if err != nil {
+			log.WithError(err).Errorf("failed to create the thumbnail image file of live %s", ls.ID)
+			return
+		}
+		defer f.Close()
+
+		_, _ = io.Copy(f, img)
 	}()
 	log.Infof("live %s recording was started", ls.ID)
 

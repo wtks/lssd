@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -76,6 +77,22 @@ func (info *VideoInfo) LiveStatus() LiveStatus {
 	default:
 		return LiveStatusUnknown
 	}
+}
+
+func (info *VideoInfo) DownloadThumbnailImage() (io.ReadCloser, error) {
+	if len(info.VideoDetails.Thumbnail.Thumbnails) == 0 {
+		return nil, fmt.Errorf("no thumbnail image")
+	}
+
+	resp, err := http.Get(info.VideoDetails.Thumbnail.Thumbnails[0].URL)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("failed to request thumbnail: %s", resp.Status)
+	}
+	return resp.Body, nil
 }
 
 func GetVideoInfo(id string) (*VideoInfo, error) {
