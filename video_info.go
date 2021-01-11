@@ -80,11 +80,11 @@ func (info *VideoInfo) LiveStatus() LiveStatus {
 }
 
 func (info *VideoInfo) DownloadThumbnailImage() (io.ReadCloser, error) {
-	if len(info.VideoDetails.Thumbnail.Thumbnails) == 0 {
+	if len(info.Microformat.PlayerMicroformatRenderer.Thumbnail.Thumbnails) == 0 {
 		return nil, fmt.Errorf("no thumbnail image")
 	}
 
-	resp, err := http.Get(info.VideoDetails.Thumbnail.Thumbnails[0].URL)
+	resp, err := http.Get(info.Microformat.PlayerMicroformatRenderer.Thumbnail.Thumbnails[0].URL)
 	if err != nil {
 		return nil, err
 	}
