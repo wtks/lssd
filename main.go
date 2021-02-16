@@ -280,6 +280,7 @@ func main() {
 	if err := m.Start(); err != nil {
 		log.Fatal(err)
 	}
+	go webserver()
 	log.Info("lssd has started")
 
 	sc := make(chan os.Signal, 1)
