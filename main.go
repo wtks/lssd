@@ -18,6 +18,7 @@ import (
 type Main struct {
 	RecordDir       string
 	DiscordBotToken string
+	MP4             bool
 
 	dg *discordgo.Session
 
@@ -108,7 +109,14 @@ func (m *Main) startRecording(ls *LiveStream) error {
 	m.wg.Add(1)
 	go func() {
 		defer m.wg.Done()
-		if err := ls.Record(m.parentCtx, m.RecordDir); err != nil {
+
+		var err error
+		if m.MP4 {
+			err = ls.RecordAsMP4(m.parentCtx, m.RecordDir)
+		} else {
+			err = ls.Record(m.parentCtx, m.RecordDir)
+		}
+		if err != nil {
 			log.Error(err)
 		}
 		log.Infof("live %s recording was stopped", ls.ID)
@@ -229,7 +237,6 @@ func (m *Main) messageHandler() func(*discordgo.Session, *discordgo.MessageCreat
 			if err := s.MessageReactionAdd(msg.ChannelID, msg.ID, "🆗"); err != nil {
 				log.Error(err)
 			}
-
 		case strings.HasPrefix(msg.Content, "!lssd list"):
 			var sb strings.Builder
 
@@ -268,6 +275,7 @@ func main() {
 	m := &Main{
 		RecordDir:       os.Getenv("RECORD_DIR"),
 		DiscordBotToken: os.Getenv("DISCORD_BOT_TOKEN"),
+		MP4:             os.Getenv("RECORD_FORMAT") == "mp4",
 	}
 	if err := m.Start(); err != nil {
 		log.Fatal(err)
